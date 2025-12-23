@@ -1,0 +1,4 @@
+com\cicd\manager\service\JenkinsService.class
+com\cicd\manager\CicdManagerApplication.class
+com\cicd\manager\controller\PipelineController.class
+com\cicd\manager\service\JenkinsService$1.class
