@@ -22,7 +22,7 @@ const Analytics = () => {
   useEffect(() => {
     loadBuilds();
     // Poll every 10 seconds for updates
-    const interval = setInterval(loadBuilds, 10000);
+    const interval = setInterval(loadBuilds, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -129,9 +129,8 @@ const Analytics = () => {
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 ${
-                refreshing ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 ${refreshing ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
               <span className={refreshing ? 'animate-spin' : ''}>🔄</span>
               {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -232,11 +231,10 @@ const Analytics = () => {
                     <tr key={build.number} className="border-t border-gray-700 hover:bg-gray-700/50">
                       <td className="p-2">#{build.number}</td>
                       <td className="p-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          build.result === 'SUCCESS' ? 'bg-green-600' :
-                          build.result === 'FAILURE' ? 'bg-red-600' :
-                          'bg-blue-600'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${build.result === 'SUCCESS' ? 'bg-green-600' :
+                            build.result === 'FAILURE' ? 'bg-red-600' :
+                              'bg-blue-600'
+                          }`}>
                           {build.building ? 'RUNNING' : build.result}
                         </span>
                       </td>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import TriggerBuild from './pages/TriggerBuild';
@@ -7,6 +8,7 @@ import Dashboard from './components/Dashboard';
 import LogsViewer from './pages/LogsViewer';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import Background3D from './components/Background3D';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -70,7 +72,7 @@ function App() {
   };
 
   const updateBuildStatus = (id, status, duration = 0) => {
-    setBuildHistory(buildHistory.map(build => 
+    setBuildHistory(buildHistory.map(build =>
       build.id === id ? { ...build, status, duration } : build
     ));
   };
@@ -98,12 +100,12 @@ function App() {
       build.notes || '',
       new Date(build.timestamp).toLocaleString()
     ]);
-    
+
     const csvContent = [
       headers.join(','),
       ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -115,45 +117,38 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className={`min-h-screen transition-colors duration-300 ${
-        darkMode 
-          ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
-          : 'bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50'
-      }`}>
-        {/* Animated Background Pattern */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
-          <div className="absolute top-40 left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
-        </div>
+      <div className={`min-h-screen transition-colors duration-300 text-gray-100 font-sans selection:bg-blue-500 selection:text-white`}>
+        <Background3D darkMode={darkMode} />
 
         {/* Main Content */}
         <div className="relative z-10">
           <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
 
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Routes>
-              <Route path="/" element={<Home darkMode={darkMode} recentBuilds={buildHistory} />} />
-              <Route path="/trigger" element={<TriggerBuild darkMode={darkMode} onBuildTriggered={handleBuildTriggered} settings={settings} />} />
-              <Route path="/dashboard" element={
-                <Dashboard 
-                  darkMode={darkMode} 
-                  buildHistory={buildHistory} 
-                  onUpdateTags={updateBuildTags}
-                  onUpdateNotes={updateBuildNotes}
-                  onExportCSV={exportToCSV}
-                />
-              } />
-              <Route path="/logs/:jobName/:buildNumber" element={<LogsViewer />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/settings" element={<Settings darkMode={darkMode} settings={settings} onUpdateSettings={setSettings} />} />
-            </Routes>
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<Home darkMode={darkMode} recentBuilds={buildHistory} />} />
+                <Route path="/trigger" element={<TriggerBuild darkMode={darkMode} onBuildTriggered={handleBuildTriggered} settings={settings} />} />
+                <Route path="/dashboard" element={
+                  <Dashboard
+                    darkMode={darkMode}
+                    buildHistory={buildHistory}
+                    onUpdateTags={updateBuildTags}
+                    onUpdateNotes={updateBuildNotes}
+                    onUpdateStatus={updateBuildStatus}
+                    onExportCSV={exportToCSV}
+                  />
+                } />
+                <Route path="/logs/:jobName/:buildNumber" element={<LogsViewer />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/settings" element={<Settings darkMode={darkMode} settings={settings} onUpdateSettings={setSettings} />} />
+              </Routes>
+            </AnimatePresence>
           </main>
 
           {/* Footer */}
-          <footer className={`mt-16 py-6 text-center text-sm ${
-            darkMode ? 'text-gray-500' : 'text-gray-600'
-          }`}>
+          <footer className={`mt-16 py-6 text-center text-sm ${darkMode ? 'text-gray-500' : 'text-gray-600'
+            }`}>
             <p>Powered by Jenkins, Spring Boot & React</p>
           </footer>
         </div>

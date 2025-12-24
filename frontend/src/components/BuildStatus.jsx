@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
+function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes, onUpdateStatus }) {
     const [status, setStatus] = useState(initialInfo.status);
     const [buildNumber, setBuildNumber] = useState(null);
     const [message, setMessage] = useState(initialInfo.message);
@@ -32,8 +32,12 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
                 if (currentStatus === 'SUCCESS' || currentStatus === 'FAILED' || currentStatus === 'ABORTED') {
                     clearInterval(interval);
                     setProgress(100);
+                    // Update global state
+                    if (onUpdateStatus && initialInfo.status !== currentStatus) {
+                        onUpdateStatus(initialInfo.id, currentStatus, initialInfo.startTime ? Date.now() - initialInfo.startTime : 0);
+                    }
                 } else if (currentStatus === 'RUNNING') {
-                    setProgress(prev => (prev < 90 ? prev + 10 : prev));
+                    setProgress(prev => (prev < 90 ? prev + 5 : prev)); // Slower progress for smoother feel
                 }
             } catch (err) {
                 console.error('Error polling status:', err);
@@ -82,10 +86,10 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
     };
 
     const getStatusColor = (s) => {
-        if (s === 'SUCCESS') return darkMode ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-200';
-        if (s === 'FAILED') return darkMode ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200';
-        if (s === 'RUNNING') return darkMode ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200';
-        return darkMode ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-200';
+        if (s === 'SUCCESS') return 'bg-green-500/10 border-green-500/30';
+        if (s === 'FAILED') return 'bg-red-500/10 border-red-500/30';
+        if (s === 'RUNNING') return 'bg-blue-500/10 border-blue-500/30';
+        return 'bg-yellow-500/10 border-yellow-500/30';
     };
 
     const getStatusText = (s) => {
@@ -93,7 +97,7 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
         if (s === 'FAILED') return { text: 'Build Failed', color: 'text-red-500' };
         if (s === 'RUNNING') return { text: 'Building...', color: 'text-blue-500' };
         if (s === 'QUEUED') return { text: 'Queued', color: 'text-yellow-500' };
-        return { text: status, color: darkMode ? 'text-gray-400' : 'text-gray-600' };
+        return { text: status, color: 'text-gray-300' };
     };
 
     const statusInfo = getStatusText(status);
@@ -114,15 +118,13 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
                             {statusInfo.text}
                         </h3>
                         {buildNumber && (
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                            }`}>
+                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-black/20 text-gray-300 border border-white/10">
                                 #{buildNumber}
                             </span>
                         )}
                     </div>
 
-                    <div className={`text-sm mb-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <div className="text-sm mb-3 text-gray-300">
                         <p className="truncate mb-1">
                             <span className="font-medium">Repository:</span> {initialInfo.repoUrl}
                         </p>
@@ -150,12 +152,11 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
                             {tags.map((tag, idx) => (
                                 <span
                                     key={idx}
-                                    className={`px-2 py-1 rounded text-xs font-medium ${
-                                        tag === 'hotfix' ? 'bg-red-600/20 text-red-400 border border-red-600/30' :
+                                    className={`px-2 py-1 rounded text-xs font-medium ${tag === 'hotfix' ? 'bg-red-600/20 text-red-400 border border-red-600/30' :
                                         tag === 'release' ? 'bg-green-600/20 text-green-400 border border-green-600/30' :
-                                        tag === 'experimental' ? 'bg-yellow-600/20 text-yellow-400 border border-yellow-600/30' :
-                                        'bg-blue-600/20 text-blue-400 border border-blue-600/30'
-                                    }`}
+                                            tag === 'experimental' ? 'bg-yellow-600/20 text-yellow-400 border border-yellow-600/30' :
+                                                'bg-blue-600/20 text-blue-400 border border-blue-600/30'
+                                        }`}
                                 >
                                     {tag}
                                     {isEditingTags && (
@@ -187,11 +188,7 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
                                             }
                                         }}
                                         placeholder="Add tag..."
-                                        className={`px-2 py-1 text-xs rounded border ${
-                                            darkMode
-                                                ? 'bg-gray-700 border-gray-600 text-white'
-                                                : 'bg-white border-gray-300 text-gray-900'
-                                        }`}
+                                        className="px-2 py-1 text-xs rounded border bg-black/20 border-white/10 text-white placeholder-gray-400"
                                     />
                                     <button
                                         onClick={() => setIsEditingTags(false)}
@@ -203,11 +200,7 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
                             ) : (
                                 <button
                                     onClick={() => setIsEditingTags(true)}
-                                    className={`text-xs px-2 py-1 rounded border border-dashed ${
-                                        darkMode
-                                            ? 'border-gray-600 text-gray-400 hover:border-gray-500'
-                                            : 'border-gray-300 text-gray-600 hover:border-gray-400'
-                                    }`}
+                                    className={`text-xs px-2 py-1 rounded border border-dashed border-gray-500 text-gray-300 hover:border-gray-400`}
                                 >
                                     + Add Tag
                                 </button>
@@ -217,19 +210,13 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
 
                     {/* Notes */}
                     {(notes || isEditingNotes) && (
-                        <div className={`mb-3 p-2 rounded text-sm ${
-                            darkMode ? 'bg-gray-700/50' : 'bg-gray-100'
-                        }`}>
+                        <div className="mb-3 p-2 rounded text-sm bg-black/20 text-gray-300">
                             {isEditingNotes ? (
                                 <div>
                                     <textarea
                                         value={notes}
                                         onChange={(e) => setNotes(e.target.value)}
-                                        className={`w-full px-2 py-1 text-sm rounded border ${
-                                            darkMode
-                                                ? 'bg-gray-700 border-gray-600 text-white'
-                                                : 'bg-white border-gray-300 text-gray-900'
-                                        }`}
+                                        className={`w-full px-2 py-1 text-sm rounded border bg-black/20 border-white/10 text-white placeholder-gray-400`}
                                         rows={2}
                                         placeholder="Add notes..."
                                     />
@@ -248,9 +235,7 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
                                                 setNotes(initialInfo.notes || '');
                                                 setIsEditingNotes(false);
                                             }}
-                                            className={`text-xs px-3 py-1 rounded ${
-                                                darkMode ? 'bg-gray-600' : 'bg-gray-300'
-                                            }`}
+                                            className="text-xs px-3 py-1 rounded bg-gray-600"
                                         >
                                             Cancel
                                         </button>
@@ -269,9 +254,7 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
                     {!notes && !isEditingNotes && (
                         <button
                             onClick={() => setIsEditingNotes(true)}
-                            className={`text-xs mb-3 ${
-                                darkMode ? 'text-gray-500 hover:text-gray-400' : 'text-gray-400 hover:text-gray-600'
-                            }`}
+                            className="text-xs mb-3 text-gray-400 hover:text-gray-300"
                         >
                             + Add notes
                         </button>
@@ -279,10 +262,8 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
 
                     {/* Progress Bar for Running Builds */}
                     {status === 'RUNNING' && (
-                        <div className={`w-full h-2 rounded-full overflow-hidden ${
-                            darkMode ? 'bg-gray-700' : 'bg-gray-200'
-                        }`}>
-                            <div 
+                        <div className="w-full h-2 rounded-full overflow-hidden bg-gray-700">
+                            <div
                                 className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-500 ease-out"
                                 style={{ width: `${progress}%` }}
                             ></div>
@@ -295,11 +276,7 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
                             href={`http://localhost:8082/job/${initialInfo.jobName}/${buildNumber || 'lastBuild'}/console`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`inline-flex items-center space-x-2 text-sm font-medium transition-colors ${
-                                darkMode 
-                                    ? 'text-blue-400 hover:text-blue-300' 
-                                    : 'text-blue-600 hover:text-blue-700'
-                            }`}
+                            className={`inline-flex items-center space-x-2 text-sm text-blue-400 hover:text-blue-300`}
                         >
                             <span>View Console Output</span>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -309,11 +286,7 @@ function BuildStatus({ initialInfo, darkMode, onUpdateTags, onUpdateNotes }) {
                         {buildNumber && (
                             <a
                                 href={`/logs/${initialInfo.jobName}/${buildNumber}`}
-                                className={`inline-flex items-center space-x-2 text-sm font-medium transition-colors ${
-                                    darkMode 
-                                        ? 'text-purple-400 hover:text-purple-300' 
-                                        : 'text-purple-600 hover:text-purple-700'
-                                }`}
+                                className={`inline-flex items-center space-x-2 text-sm text-purple-400 hover:text-purple-300`}
                             >
                                 <span>📄 View Logs</span>
                             </a>
